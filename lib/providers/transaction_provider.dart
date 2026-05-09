@@ -9,6 +9,15 @@ enum FilterPeriod { week, month, year }
 class TransactionProvider extends ChangeNotifier {
   late Box<TransactionModel> _txBox;
   late Box<BudgetModel> _budgetBox;
+  late Box _settingsBox;
+
+  String _userName = 'Pengguna';
+  DateTime? _dateOfBirth;
+  bool _isFirstRun = true;
+
+  String get userName => _userName;
+  DateTime? get dateOfBirth => _dateOfBirth;
+  bool get isFirstRun => _isFirstRun;
 
   FilterPeriod _filterPeriod = FilterPeriod.month;
   DateTime _selectedDate = DateTime.now();
@@ -40,7 +49,49 @@ class TransactionProvider extends ChangeNotifier {
   Future<void> init() async {
     _txBox = Hive.box<TransactionModel>('transactions');
     _budgetBox = Hive.box<BudgetModel>('budgets');
+    _settingsBox = Hive.box('settings');
+    
+    _userName = _settingsBox.get('userName', defaultValue: 'User');
+    final dobStr = _settingsBox.get('dateOfBirth');
+    if (dobStr != null) {
+      _dateOfBirth = DateTime.tryParse(dobStr);
+    }
+    _isFirstRun = _settingsBox.get('isFirstRun', defaultValue: true);
+    
     _invalidateCache();
+    notifyListeners();
+  }
+
+  Future<void> updateUserName(String name) async {
+    _userName = name;
+    await _settingsBox.put('userName', name);
+    notifyListeners();
+  }
+
+  Future<void> updateDateOfBirth(DateTime date) async {
+    _dateOfBirth = date;
+    await _settingsBox.put('dateOfBirth', date.toIso8601String());
+    notifyListeners();
+  }
+
+  Future<void> completeOnboarding() async {
+    _isFirstRun = false;
+    await _settingsBox.put('isFirstRun', false);
+    notifyListeners();
+  }
+
+  Future<void> setupProfile({required String name, DateTime? dob}) async {
+    _userName = name;
+    await _settingsBox.put('userName', name);
+    
+    if (dob != null) {
+      _dateOfBirth = dob;
+      await _settingsBox.put('dateOfBirth', dob.toIso8601String());
+    }
+    
+    _isFirstRun = false;
+    await _settingsBox.put('isFirstRun', false);
+    
     notifyListeners();
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../providers/transaction_provider.dart';
 import '../utils/app_theme.dart';
 
@@ -8,11 +9,35 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<TransactionProvider>();
+    
     return Scaffold(
       appBar: AppBar(title: const Text('Pengaturan')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          _buildSection(
+            title: 'Profil',
+            children: [
+              _buildTile(
+                icon: Icons.person_outline,
+                iconColor: AppTheme.primary,
+                title: 'Nama Pengguna',
+                subtitle: provider.userName,
+                onTap: () => _showEditNameDialog(context),
+              ),
+              _buildTile(
+                icon: Icons.cake_outlined,
+                iconColor: Colors.pinkAccent,
+                title: 'Tanggal Lahir',
+                subtitle: provider.dateOfBirth == null
+                    ? 'Belum diatur'
+                    : DateFormat('dd MMMM yyyy', 'id_ID').format(provider.dateOfBirth!),
+                onTap: () => _showEditBirthDateDialog(context),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
           _buildSection(
             title: 'Data',
             children: [
@@ -33,7 +58,7 @@ class SettingsScreen extends StatelessWidget {
                 icon: Icons.info_outline,
                 iconColor: AppTheme.primaryLight,
                 title: 'Dompetku',
-                subtitle: 'Versi 1.0.0',
+                subtitle: 'Versi 2.0.0',
                 onTap: () => _showAboutDialog(context),
               ),
             ],
@@ -92,6 +117,70 @@ class SettingsScreen extends StatelessWidget {
       onTap: onTap,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     );
+  }
+
+  void _showEditNameDialog(BuildContext context) {
+    final provider = context.read<TransactionProvider>();
+    final controller = TextEditingController(text: provider.userName);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.cardBg,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Ubah Nama', style: TextStyle(color: Colors.white)),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: 'Masukkan nama kamu',
+            hintStyle: const TextStyle(color: Color(0xFF6B7280)),
+            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.primary.withOpacity(0.5))),
+            focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.primary)),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white),
+            onPressed: () {
+              if (controller.text.trim().isNotEmpty) {
+                provider.updateUserName(controller.text.trim());
+                Navigator.pop(ctx);
+              }
+            },
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showEditBirthDateDialog(BuildContext context) async {
+    final provider = context.read<TransactionProvider>();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: provider.dateOfBirth ?? DateTime(2000),
+      firstDate: DateTime(1950),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: AppTheme.primary,
+              onPrimary: Colors.white,
+              surface: AppTheme.cardBg,
+              onSurface: Colors.white,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      provider.updateDateOfBirth(picked);
+    }
   }
 
   void _showClearDataDialog(BuildContext context) {
@@ -161,7 +250,7 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
         content: const Text(
-          'Aplikasi pencatatan keuangan pribadi.\n\nVersi 1.0.0\nDibuat dengan Flutter.',
+          'Aplikasi pencatatan keuangan pribadi.\n\nVersi 2.0.0\nDibuat dengan Flutter.',
           style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
         ),
         actions: [

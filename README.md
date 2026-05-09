@@ -97,7 +97,7 @@ Background gelap menggunakan warna biru navy yang terinspirasi dari warna rambut
 
 ```bash
 # Clone repository
-git clone https://github.com/your-username/aplikasi_pencatatan_keuangan.git
+git clone https://github.com/Said-Habibi/aplikasi_pencatatan_keuangan.git
 
 # Masuk ke folder proyek
 cd aplikasi_pencatatan_keuangan

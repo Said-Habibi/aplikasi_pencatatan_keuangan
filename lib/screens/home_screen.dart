@@ -21,13 +21,12 @@ class HomeScreen extends StatelessWidget {
           return CustomScrollView(
             slivers: [
               SliverAppBar(
-                expandedHeight: 230,
+                expandedHeight: 260,
                 pinned: true,
                 backgroundColor: AppTheme.primary,
                 flexibleSpace: FlexibleSpaceBar(
                   background: SummaryHeader(provider: provider),
                 ),
-                title: const Text('Dompetku', style: TextStyle(color: Colors.white)),
                 actions: [
                   _buildNotificationBell(context, provider),
                 ],

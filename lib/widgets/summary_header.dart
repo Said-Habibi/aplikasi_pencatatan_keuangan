@@ -18,10 +18,19 @@ class SummaryHeader extends StatelessWidget {
           colors: [AppTheme.primary, AppTheme.secondary],
         ),
       ),
-      padding: const EdgeInsets.fromLTRB(20, 80, 20, 20),
+      padding: const EdgeInsets.fromLTRB(20, 70, 20, 15),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            '${_getGreeting()}, ${provider.userName}!',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 2),
           Text(
             DateFormat('MMMM yyyy', 'id_ID').format(DateTime.now()),
             style: const TextStyle(color: Color(0xFFDDD6FE), fontSize: 13),
@@ -97,5 +106,21 @@ class SummaryHeader extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _getGreeting() {
+    final now = DateTime.now();
+    
+    // Check birthday
+    final dob = provider.dateOfBirth;
+    if (dob != null && dob.day == now.day && dob.month == now.month) {
+      return '🎂 Selamat Ulang Tahun';
+    }
+
+    final hour = now.hour;
+    if (hour >= 5 && hour < 11) return 'Selamat Pagi';
+    if (hour >= 11 && hour < 15) return 'Selamat Siang';
+    if (hour >= 15 && hour < 18) return 'Selamat Sore';
+    return 'Selamat Malam';
   }
 }

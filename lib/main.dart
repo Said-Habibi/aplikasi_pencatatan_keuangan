@@ -10,6 +10,7 @@ import 'screens/statistics_screen.dart';
 import 'screens/add_transaction_screen.dart';
 import 'screens/budget_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'utils/app_theme.dart';
 
 void main() async {
@@ -24,6 +25,7 @@ void main() async {
 
   await Hive.openBox<TransactionModel>('transactions');
   await Hive.openBox<BudgetModel>('budgets');
+  await Hive.openBox('settings');
 
   runApp(const DompetKuApp());
 }
@@ -64,6 +66,12 @@ class _MainNavigationState extends State<MainNavigation> {
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<TransactionProvider>();
+    
+    if (provider.isFirstRun) {
+      return const OnboardingScreen();
+    }
+
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,

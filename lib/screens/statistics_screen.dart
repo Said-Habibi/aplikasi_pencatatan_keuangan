@@ -76,7 +76,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         : provider.monthlyChartData;
     final maxVal = data.fold<double>(0, (m, d) => [m, d['income']!, d['expense']!].reduce((a, b) => a > b ? a : b));
     final labels = provider.filterPeriod == FilterPeriod.week
-        ? ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min']
+        ? _last7DayLabels()
         : _last6MonthLabels();
 
     return Container(
@@ -266,6 +266,15 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         ],
       ),
     );
+  }
+
+  List<String> _last7DayLabels() {
+    const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+    final now = DateTime.now();
+    return List.generate(7, (i) {
+      final day = now.subtract(Duration(days: 6 - i));
+      return dayNames[day.weekday % 7];
+    });
   }
 
   List<String> _last6MonthLabels() {
