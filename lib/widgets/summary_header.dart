@@ -6,63 +6,74 @@ import '../utils/currency_formatter.dart';
 
 class SummaryHeader extends StatelessWidget {
   final TransactionProvider provider;
-  const SummaryHeader({super.key, required this.provider});
+  final double opacity;
+  const SummaryHeader({super.key, required this.provider, this.opacity = 1.0});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppTheme.primary, AppTheme.secondary],
+    return Opacity(
+      opacity: opacity,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppTheme.primary, AppTheme.secondary],
+          ),
         ),
-      ),
-      padding: const EdgeInsets.fromLTRB(20, 70, 20, 15),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '${_getGreeting()}, ${provider.userName}!',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            DateFormat('MMMM yyyy', 'id_ID').format(DateTime.now()),
-            style: const TextStyle(color: Color(0xFFDDD6FE), fontSize: 13),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            CurrencyFormatter.format(provider.balance),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
+        padding: const EdgeInsets.fromLTRB(20, 70, 20, 15),
+        child: SingleChildScrollView(
+          physics: const NeverScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(child: _statCard(
-                icon: Icons.arrow_downward,
-                label: 'Pemasukan',
-                amount: provider.totalIncome,
-                color: AppTheme.income,
-              )),
-              const SizedBox(width: 12),
-              Expanded(child: _statCard(
-                icon: Icons.arrow_upward,
-                label: 'Pengeluaran',
-                amount: provider.totalExpense,
-                color: AppTheme.expense,
-              )),
+              Text(
+                '${_getGreeting()}, ${provider.userName}!',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                DateFormat('MMMM yyyy', 'id_ID').format(DateTime.now()),
+                style: const TextStyle(color: Color(0xFFDDD6FE), fontSize: 13),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                CurrencyFormatter.format(provider.balance),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _statCard(
+                      icon: Icons.arrow_downward,
+                      label: 'Pemasukan',
+                      amount: provider.totalIncome,
+                      color: AppTheme.income,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _statCard(
+                      icon: Icons.arrow_upward,
+                      label: 'Pengeluaran',
+                      amount: provider.totalExpense,
+                      color: AppTheme.expense,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }

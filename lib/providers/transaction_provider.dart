@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:uuid/uuid.dart';
+import 'package:geolocator/geolocator.dart';
 import '../models/transaction_model.dart';
 import '../models/budget_model.dart';
+import '../utils/weather_helper.dart';
 
 enum FilterPeriod { week, month, year }
 
@@ -14,10 +16,22 @@ class TransactionProvider extends ChangeNotifier {
   String _userName = 'Pengguna';
   DateTime? _dateOfBirth;
   bool _isFirstRun = true;
+  
+  bool _weatherEnabled = false;
+  bool _autoLocationEnabled = false;
+  bool _isDetectingLocation = false;
+  String _weatherLocation = 'Pekanbaru';
+  WeatherData? _weatherData;
 
   String get userName => _userName;
   DateTime? get dateOfBirth => _dateOfBirth;
   bool get isFirstRun => _isFirstRun;
+  
+  bool get weatherEnabled => _weatherEnabled;
+  bool get autoLocationEnabled => _autoLocationEnabled;
+  bool get isDetectingLocation => _isDetectingLocation;
+  String get weatherLocation => _weatherLocation;
+  WeatherData? get weatherData => _weatherData;
 
   FilterPeriod _filterPeriod = FilterPeriod.month;
   DateTime _selectedDate = DateTime.now();
@@ -58,7 +72,14 @@ class TransactionProvider extends ChangeNotifier {
     }
     _isFirstRun = _settingsBox.get('isFirstRun', defaultValue: true);
     
+    _weatherEnabled = _settingsBox.get('weatherEnabled', defaultValue: false);
+    _autoLocationEnabled = _settingsBox.get('autoLocationEnabled', defaultValue: false);
+    _weatherLocation = _settingsBox.get('weatherLocation', defaultValue: 'Pekanbaru');
+    
     _invalidateCache();
+    if (_weatherEnabled) {
+      fetchWeather();
+    }
     notifyListeners();
   }
 
@@ -92,6 +113,95 @@ class TransactionProvider extends ChangeNotifier {
     _isFirstRun = false;
     await _settingsBox.put('isFirstRun', false);
     
+    notifyListeners();
+  }
+
+  Future<void> updateWeatherSettings({bool? enabled, bool? autoLocation, String? location}) async {
+    if (enabled != null) {
+      _weatherEnabled = enabled;
+      await _settingsBox.put('weatherEnabled', enabled);
+    }
+    if (autoLocation != null) {
+      _autoLocationEnabled = autoLocation;
+      await _settingsBox.put('autoLocationEnabled', autoLocation);
+      
+      notifyListeners(); // Instant feedback for the switch
+
+      if (autoLocation) {
+        detectLocation(); // Start detection in background
+      }
+    }
+    if (location != null && location.isNotEmpty) {
+      _weatherLocation = location;
+      await _settingsBox.put('weatherLocation', location);
+    }
+    
+    if (!_weatherEnabled) {
+      _weatherData = null;
+    }
+    
+    notifyListeners();
+
+    if (_weatherEnabled && !_autoLocationEnabled) {
+      fetchWeather();
+    }
+  }
+
+  Future<void> detectLocation() async {
+    _isDetectingLocation = true;
+    notifyListeners();
+
+    try {
+      bool serviceEnabled;
+      LocationPermission permission;
+
+      serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        _isDetectingLocation = false;
+        notifyListeners();
+        return;
+      }
+
+      permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          _isDetectingLocation = false;
+          notifyListeners();
+          return;
+        }
+      }
+      
+      if (permission == LocationPermission.deniedForever) {
+        _isDetectingLocation = false;
+        notifyListeners();
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
+      );
+      _weatherLocation = '${position.latitude},${position.longitude}';
+      
+      await fetchWeather();
+      
+      // Update city name if available from weather data
+      if (_weatherData?.areaName != null) {
+        _weatherLocation = _weatherData!.areaName!;
+        await _settingsBox.put('weatherLocation', _weatherLocation);
+      }
+    } catch (e) {
+      debugPrint('Error detecting location: $e');
+    } finally {
+      _isDetectingLocation = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchWeather() async {
+    if (!_weatherEnabled) return;
+    _weatherData = await WeatherHelper.fetchWeather(_weatherLocation);
     notifyListeners();
   }
 

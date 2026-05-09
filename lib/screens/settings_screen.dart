@@ -52,6 +52,61 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           _buildSection(
+            title: 'Cuaca',
+            children: [
+              SwitchListTile.adaptive(
+                secondary: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.cloud_outlined, color: Colors.blue, size: 20),
+                ),
+                title: const Text('Pengingat Cuaca', style: TextStyle(color: Colors.white, fontSize: 15)),
+                subtitle: const Text('Tampilkan info cuaca di dashboard', style: TextStyle(color: Color(0xFF6B7280), fontSize: 12)),
+                value: provider.weatherEnabled,
+                onChanged: (val) => provider.updateWeatherSettings(enabled: val),
+                activeColor: AppTheme.primary,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              ),
+              if (provider.weatherEnabled) ...[
+                SwitchListTile.adaptive(
+                  secondary: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: provider.isDetectingLocation 
+                        ? const Padding(
+                            padding: EdgeInsets.all(10),
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.green),
+                          )
+                        : const Icon(Icons.my_location, color: Colors.green, size: 20),
+                  ),
+                  title: const Text('Lokasi Otomatis', style: TextStyle(color: Colors.white, fontSize: 15)),
+                  subtitle: const Text('Gunakan GPS untuk deteksi lokasi', style: TextStyle(color: Color(0xFF6B7280), fontSize: 12)),
+                  value: provider.autoLocationEnabled,
+                  onChanged: (val) => provider.updateWeatherSettings(autoLocation: val),
+                  activeColor: AppTheme.primary,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                ),
+                if (!provider.autoLocationEnabled)
+                  _buildTile(
+                    icon: Icons.location_on_outlined,
+                    iconColor: Colors.orange,
+                    title: 'Lokasi',
+                    subtitle: provider.weatherLocation,
+                    onTap: () => _showEditLocationDialog(context),
+                  ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 20),
+          _buildSection(
             title: 'Tentang Aplikasi',
             children: [
               _buildTile(
@@ -257,6 +312,44 @@ class SettingsScreen extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Tutup'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditLocationDialog(BuildContext context) {
+    final provider = context.read<TransactionProvider>();
+    final controller = TextEditingController(text: provider.weatherLocation);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.cardBg,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Ubah Lokasi', style: TextStyle(color: Colors.white)),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: 'Masukkan nama kota (misal: Jakarta)',
+            hintStyle: const TextStyle(color: Color(0xFF6B7280)),
+            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.primary.withOpacity(0.5))),
+            focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.primary)),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white),
+            onPressed: () {
+              if (controller.text.trim().isNotEmpty) {
+                provider.updateWeatherSettings(location: controller.text.trim());
+                Navigator.pop(ctx);
+              }
+            },
+            child: const Text('Simpan'),
           ),
         ],
       ),

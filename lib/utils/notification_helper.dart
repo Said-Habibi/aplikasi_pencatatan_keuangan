@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../providers/transaction_provider.dart';
 import '../models/transaction_model.dart';
 import 'currency_formatter.dart';
+import 'weather_helper.dart';
 
 enum NotificationType { warning, danger, success, info }
 
@@ -134,6 +135,30 @@ class NotificationHelper {
         subtitle:
             'Defisit ${CurrencyFormatter.format(provider.totalExpense - provider.totalIncome)} bulan ini',
         type: NotificationType.danger,
+      ));
+    }
+
+    // 7. Weather Alert
+    if (provider.weatherEnabled && provider.weatherData != null) {
+      final weather = provider.weatherData!;
+      String title = 'Info Cuaca: ${weather.condition}';
+      String subtitle = 'Suhu saat ini di ${provider.weatherLocation} adalah ${weather.tempC.toStringAsFixed(0)}°C.';
+      NotificationType type = NotificationType.info;
+
+      if (weather.precipMM > 0) {
+        title = 'Siapkan Payung! ☔';
+        subtitle = 'Hari ini diprediksi hujan (${weather.precipMM}mm). Jangan lupa bawa payung!';
+        type = NotificationType.warning;
+      } else if (weather.tempC > 32) {
+        title = 'Cuaca Cukup Panas ☀️';
+        subtitle = 'Suhu mencapai ${weather.tempC.toStringAsFixed(0)}°C. Jangan lupa minum air!';
+      }
+
+      notifications.insert(0, NotificationItem(
+        icon: weather.iconData,
+        title: title,
+        subtitle: subtitle,
+        type: type,
       ));
     }
 
